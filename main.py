@@ -164,8 +164,26 @@ def main():
         print("Invalid setting")
         return
     
-    # 2. Home/away designation
+    # 2. Home/away designation - CRITICAL FIX HERE
     home_or_away = input("Is this a home, away, or neutral match for your team?: ").lower().strip()
+    
+    # Determine which team is "your team" (the manager's team)
+    if home_or_away == "home":
+        manager_team = home_team
+        opponent_team = away_team
+        manager_is_home = True
+    elif home_or_away == "away":
+        manager_team = away_team
+        opponent_team = home_team
+        manager_is_home = False
+    else:  # neutral
+        # For neutral, assume first team mentioned is manager's team
+        manager_team = home_team
+        opponent_team = away_team
+        manager_is_home = True
+    
+    print(f"\nYour team: {manager_team}")
+    print(f"Opponent: {opponent_team}")
     
     # Adjust importance for away UCL matches
     if setting == 'ucl' and home_or_away == 'away' and stage not in ['league phase', 'final']:
@@ -221,7 +239,7 @@ def main():
                     return home_val, away_val
         return default_home, default_away
     
-    # All stats from OCR
+    # All stats from OCR (these are always from screenshot perspective: left=home, right=away)
     home_shots, away_shots = get_stat(['shots'], 0, 0)
     home_shots_target, away_shots_target = get_stat(['on target'], 0, 0)
     home_xg, away_xg = get_stat(['xg'], 0.0, 0.0)
@@ -257,26 +275,73 @@ def main():
     home_prog_passes, away_prog_passes = int(home_prog_passes), int(away_prog_passes)
     home_sprints, away_sprints = int(home_sprints), int(away_sprints)
     
-    # Display extracted stats
-    print(f"Total Shots: {home_shots} vs {away_shots}")
-    print(f"Shots on Target: {home_shots_target} vs {away_shots_target}")
-    print(f"Expected Goals (xG): {home_xg} vs {away_xg}")
-    print(f"Shots off Target: {home_shots_off} vs {away_shots_off}")
-    print(f"Clear Cut Chances: {home_clear_chances} vs {away_clear_chances}")
-    print(f"Long Shots: {home_long_shots} vs {away_long_shots}")
-    print(f"Possession: {pos_home}% vs {pos_away}%")
-    print(f"Corners: {home_corners} vs {away_corners}")
-    print(f"Fouls: {home_fouls} vs {away_fouls}")
-    print(f"Offsides: {home_offsides} vs {away_offsides}")
-    print(f"Passes Completed: {home_passes_comp}% vs {away_passes_comp}%")
-    print(f"Crosses Completed: {home_crosses_comp}% vs {away_crosses_comp}%")
-    print(f"Tackles Won: {home_tackles_won}% vs {away_tackles_won}%")
-    print(f"Headers Won: {home_headers_won}% vs {away_headers_won}%")
-    print(f"Yellow Cards: {home_yellow} vs {away_yellow}")
-    print(f"Red Cards: {home_red} vs {away_red}")
-    print(f"Average Rating: {home_rating} vs {away_rating}")
-    print(f"Progressive Passes: {home_prog_passes} vs {away_prog_passes}")
-    print(f"High Intensity Sprints: {home_sprints} vs {away_sprints}")
+    # NOW: Remap stats to manager's team perspective
+    if manager_is_home:
+        # Manager is home team - stats are already correct
+        manager_shots, opp_shots = home_shots, away_shots
+        manager_shots_target, opp_shots_target = home_shots_target, away_shots_target
+        manager_xg, opp_xg = home_xg, away_xg
+        manager_shots_off, opp_shots_off = home_shots_off, away_shots_off
+        manager_clear_chances, opp_clear_chances = home_clear_chances, away_clear_chances
+        manager_long_shots, opp_long_shots = home_long_shots, away_long_shots
+        manager_possession, opp_possession = pos_home, pos_away
+        manager_corners, opp_corners = home_corners, away_corners
+        manager_fouls, opp_fouls = home_fouls, away_fouls
+        manager_offsides, opp_offsides = home_offsides, away_offsides
+        manager_passes_comp, opp_passes_comp = home_passes_comp, away_passes_comp
+        manager_crosses_comp, opp_crosses_comp = home_crosses_comp, away_crosses_comp
+        manager_tackles_won, opp_tackles_won = home_tackles_won, away_tackles_won
+        manager_headers_won, opp_headers_won = home_headers_won, away_headers_won
+        manager_yellow, opp_yellow = home_yellow, away_yellow
+        manager_red, opp_red = home_red, away_red
+        manager_rating, opp_rating = home_rating, away_rating
+        manager_prog_passes, opp_prog_passes = home_prog_passes, away_prog_passes
+        manager_sprints, opp_sprints = home_sprints, away_sprints
+        manager_score, opp_score = home_score, away_score
+    else:
+        # Manager is away team - SWAP ALL STATS
+        manager_shots, opp_shots = away_shots, home_shots
+        manager_shots_target, opp_shots_target = away_shots_target, home_shots_target
+        manager_xg, opp_xg = away_xg, home_xg
+        manager_shots_off, opp_shots_off = away_shots_off, home_shots_off
+        manager_clear_chances, opp_clear_chances = away_clear_chances, home_clear_chances
+        manager_long_shots, opp_long_shots = away_long_shots, home_long_shots
+        manager_possession, opp_possession = pos_away, pos_home
+        manager_corners, opp_corners = away_corners, home_corners
+        manager_fouls, opp_fouls = away_fouls, home_fouls
+        manager_offsides, opp_offsides = away_offsides, home_offsides
+        manager_passes_comp, opp_passes_comp = away_passes_comp, home_passes_comp
+        manager_crosses_comp, opp_crosses_comp = away_crosses_comp, home_crosses_comp
+        manager_tackles_won, opp_tackles_won = away_tackles_won, home_tackles_won
+        manager_headers_won, opp_headers_won = away_headers_won, home_headers_won
+        manager_yellow, opp_yellow = away_yellow, home_yellow
+        manager_red, opp_red = away_red, home_red
+        manager_rating, opp_rating = away_rating, home_rating
+        manager_prog_passes, opp_prog_passes = away_prog_passes, home_prog_passes
+        manager_sprints, opp_sprints = away_sprints, home_sprints
+        manager_score, opp_score = away_score, home_score
+    
+    # Display extracted stats from MANAGER'S PERSPECTIVE
+    print(f"Your Team ({manager_team}) vs Opponent ({opponent_team})")
+    print(f"Total Shots: {manager_shots} vs {opp_shots}")
+    print(f"Shots on Target: {manager_shots_target} vs {opp_shots_target}")
+    print(f"Expected Goals (xG): {manager_xg} vs {opp_xg}")
+    print(f"Shots off Target: {manager_shots_off} vs {opp_shots_off}")
+    print(f"Clear Cut Chances: {manager_clear_chances} vs {opp_clear_chances}")
+    print(f"Long Shots: {manager_long_shots} vs {opp_long_shots}")
+    print(f"Possession: {manager_possession}% vs {opp_possession}%")
+    print(f"Corners: {manager_corners} vs {opp_corners}")
+    print(f"Fouls: {manager_fouls} vs {opp_fouls}")
+    print(f"Offsides: {manager_offsides} vs {opp_offsides}")
+    print(f"Passes Completed: {manager_passes_comp}% vs {opp_passes_comp}%")
+    print(f"Crosses Completed: {manager_crosses_comp}% vs {opp_crosses_comp}%")
+    print(f"Tackles Won: {manager_tackles_won}% vs {opp_tackles_won}%")
+    print(f"Headers Won: {manager_headers_won}% vs {opp_headers_won}%")
+    print(f"Yellow Cards: {manager_yellow} vs {opp_yellow}")
+    print(f"Red Cards: {manager_red} vs {opp_red}")
+    print(f"Average Rating: {manager_rating} vs {opp_rating}")
+    print(f"Progressive Passes: {manager_prog_passes} vs {opp_prog_passes}")
+    print(f"High Intensity Sprints: {manager_sprints} vs {opp_sprints}")
     
     # Calculate derived metrics
     
@@ -306,8 +371,8 @@ def main():
     importance_level = next(label for (low, high), label in importance_labels.items() if low <= importance < high)
     
     # Match aggression
-    red_cards_total = home_red + away_red
-    yellow_cards_total = home_yellow + away_yellow
+    red_cards_total = manager_red + opp_red
+    yellow_cards_total = manager_yellow + opp_yellow
     aggression_score = yellow_cards_total + (red_cards_total * 2)
     
     if aggression_score == 0:
@@ -323,17 +388,17 @@ def main():
     match_heat = card_labels[match_aggression]
     
     # Team aggression analysis
-    home_aggression_score = home_yellow + (home_red * 3)
-    away_aggression_score = away_yellow + (away_red * 3)
+    manager_aggression_score = manager_yellow + (manager_red * 3)
+    opp_aggression_score = opp_yellow + (opp_red * 3)
     
-    if home_aggression_score > away_aggression_score:
-        aggr_team = home_team
-        calmer_team = away_team
-        aggression_difference = home_aggression_score - away_aggression_score
-    elif away_aggression_score > home_aggression_score:
-        aggr_team = away_team
-        calmer_team = home_team
-        aggression_difference = away_aggression_score - home_aggression_score
+    if manager_aggression_score > opp_aggression_score:
+        aggr_team = manager_team
+        calmer_team = opponent_team
+        aggression_difference = manager_aggression_score - opp_aggression_score
+    elif opp_aggression_score > manager_aggression_score:
+        aggr_team = opponent_team
+        calmer_team = manager_team
+        aggression_difference = opp_aggression_score - manager_aggression_score
     else:
         aggr_team = "Both teams equally aggressive"
         calmer_team = "Both teams equally calm"
@@ -349,12 +414,12 @@ def main():
         aggression_analysis = f"{aggr_team} was significantly more aggressive than {calmer_team}"
     
     # Calculate shot efficiency
-    home_shot_accuracy = (home_shots_target / home_shots * 100) if home_shots > 0 else 0
-    away_shot_accuracy = (away_shots_target / away_shots * 100) if away_shots > 0 else 0
+    manager_shot_accuracy = (manager_shots_target / manager_shots * 100) if manager_shots > 0 else 0
+    opp_shot_accuracy = (opp_shots_target / opp_shots * 100) if opp_shots > 0 else 0
     
     # Calculate xG efficiency (goals vs expected goals)
-    home_xg_efficiency = (home_score / home_xg * 100) if home_xg > 0 else 0
-    away_xg_efficiency = (away_score / away_xg * 100) if away_xg > 0 else 0
+    manager_xg_efficiency = (manager_score / manager_xg * 100) if manager_xg > 0 else 0
+    opp_xg_efficiency = (opp_score / opp_xg * 100) if opp_xg > 0 else 0
     
     # Generate press conference questions
     print("\n--- Generating press conference questions ---")
@@ -366,34 +431,34 @@ MATCH CONTEXT:
 Setting: {setting.upper()}
 Importance: {importance:.1f}/10 ({importance_level})
 Match: {home_team} {score} {away_team} ({home_or_away})
-The manager is managing the {home_or_away} team
+The manager is managing {manager_team}
 
-COMPREHENSIVE MATCH STATS:
-Goals: {home_score} vs {away_score}
-Total Shots: {home_shots} vs {away_shots}
-Shots on Target: {home_shots_target} vs {away_shots_target}
-Shot Accuracy: {home_shot_accuracy:.1f}% vs {away_shot_accuracy:.1f}%
-Expected Goals (xG): {home_xg} vs {away_xg}
-xG Efficiency: {home_xg_efficiency:.1f}% vs {away_xg_efficiency:.1f}%
-Clear Cut Chances: {home_clear_chances} vs {away_clear_chances}
-Long Shots: {home_long_shots} vs {away_long_shots}
-Possession: {pos_home}% vs {pos_away}%
-Corners: {home_corners} vs {away_corners}
-Fouls: {home_fouls} vs {away_fouls}
-Offsides: {home_offsides} vs {away_offsides}
-Pass Completion: {home_passes_comp}% vs {away_passes_comp}%
-Cross Completion: {home_crosses_comp}% vs {away_crosses_comp}%
-Tackles Won: {home_tackles_won}% vs {away_tackles_won}%
-Headers Won: {home_headers_won}% vs {away_headers_won}%
-Yellow Cards: {home_yellow} vs {away_yellow}
-Red Cards: {home_red} vs {away_red}
-Average Rating: {home_rating} vs {away_rating}
-Progressive Passes: {home_prog_passes} vs {away_prog_passes}
-High Intensity Sprints: {home_sprints} vs {away_sprints}
+COMPREHENSIVE MATCH STATS ({manager_team} vs {opponent_team}):
+Goals: {manager_score} vs {opp_score}
+Total Shots: {manager_shots} vs {opp_shots}
+Shots on Target: {manager_shots_target} vs {opp_shots_target}
+Shot Accuracy: {manager_shot_accuracy:.1f}% vs {opp_shot_accuracy:.1f}%
+Expected Goals (xG): {manager_xg} vs {opp_xg}
+xG Efficiency: {manager_xg_efficiency:.1f}% vs {opp_xg_efficiency:.1f}%
+Clear Cut Chances: {manager_clear_chances} vs {opp_clear_chances}
+Long Shots: {manager_long_shots} vs {opp_long_shots}
+Possession: {manager_possession}% vs {opp_possession}%
+Corners: {manager_corners} vs {opp_corners}
+Fouls: {manager_fouls} vs {opp_fouls}
+Offsides: {manager_offsides} vs {opp_offsides}
+Pass Completion: {manager_passes_comp}% vs {opp_passes_comp}%
+Cross Completion: {manager_crosses_comp}% vs {opp_crosses_comp}%
+Tackles Won: {manager_tackles_won}% vs {opp_tackles_won}%
+Headers Won: {manager_headers_won}% vs {opp_headers_won}%
+Yellow Cards: {manager_yellow} vs {opp_yellow}
+Red Cards: {manager_red} vs {opp_red}
+Average Rating: {manager_rating} vs {opp_rating}
+Progressive Passes: {manager_prog_passes} vs {opp_prog_passes}
+High Intensity Sprints: {manager_sprints} vs {opp_sprints}
 
 GOAL SCORERS:
-Home goal scorers: {', '.join(home_goal_scorers) if home_goal_scorers else 'None'}
-Away goal scorers: {', '.join(away_goal_scorers) if away_goal_scorers else 'None'}
+{manager_team}: {', '.join(home_goal_scorers if manager_is_home else away_goal_scorers) if (home_goal_scorers if manager_is_home else away_goal_scorers) else 'None'}
+{opponent_team}: {', '.join(away_goal_scorers if manager_is_home else home_goal_scorers) if (away_goal_scorers if manager_is_home else home_goal_scorers) else 'None'}
 
 MATCH CHARACTER:
 Team Discipline: {aggression_analysis}
@@ -428,7 +493,7 @@ Only ask the questions - no introduction or commentary.
     # Generate questions
     response = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama3-70b-8192"
+        model="llama-3.3-70b-versatile"
     )
     
     print("\n=== PRESS CONFERENCE QUESTIONS ===")
