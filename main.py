@@ -12,9 +12,10 @@ if api_key is None:
     raise ValueError("GROQ_API_KEY environment variable not set.")
 client = Groq(api_key=api_key)
 
+# Percentage fields accept values like "65" or "65%"; parsing strips the % symbol.
 MANUAL_STAT_FIELDS = [
     ("shots", "total shots"),
-    ("on target", "shots on target"),
+    ("shots_on_target", "shots on target"),
     ("xg", "expected goals (xG)"),
     ("off target", "shots off target"),
     ("clear cut chances", "clear cut chances"),
@@ -103,7 +104,7 @@ def _parse_numeric(value: str) -> Optional[float]:
         return None
 
 
-def _prompt_choice(prompt: str, choices: Dict[str, object]) -> object:
+def _prompt_choice(prompt: str, choices: Dict[str, str]) -> str:
     while True:
         selection = input(prompt).strip().lower()
         if selection in choices:
@@ -321,7 +322,7 @@ def main():
     
     # All stats from input (these are always from home/away perspective)
     home_shots, away_shots = get_stat(['shots'], 0, 0)
-    home_shots_target, away_shots_target = get_stat(['on target'], 0, 0)
+    home_shots_target, away_shots_target = get_stat(['on target', 'shots on target', 'shots_on_target'], 0, 0)
     home_xg, away_xg = get_stat(['xg'], 0.0, 0.0)
     home_shots_off, away_shots_off = get_stat(['off target'], 0, 0)
     home_clear_chances, away_clear_chances = get_stat(['clear cut chances'], 0, 0)
