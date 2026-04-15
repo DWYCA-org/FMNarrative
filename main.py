@@ -213,7 +213,7 @@ def main():
     # MINIMAL USER INPUTS - Only what can't be determined from match stats
     
     # 1. Match setting and stage
-    print("\n--- Match Context (cannot be determined from screenshot) ---")
+    print("\n--- Match Context (cannot be determined from match stats) ---")
     setting = input("Match setting (ucl/domestic cup/derby): ").lower().strip()
     
     if setting == "ucl":
