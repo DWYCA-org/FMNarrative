@@ -89,7 +89,7 @@ def _prompt_choice(prompt: str, choices: Dict[str, object]) -> object:
         selection = input(prompt).strip().lower()
         if selection in choices:
             return choices[selection]
-        print("Invalid choice. Please try again.")
+        print(f"Invalid choice: {selection}. Please try again.")
 
 
 def _prompt_int_value(prompt: str) -> int:
