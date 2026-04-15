@@ -12,6 +12,28 @@ if api_key is None:
     raise ValueError("GROQ_API_KEY environment variable not set.")
 client = Groq(api_key=api_key)
 
+MANUAL_STAT_FIELDS = [
+    ("shots", "total shots"),
+    ("on target", "shots on target"),
+    ("xg", "expected goals (xG)"),
+    ("off target", "shots off target"),
+    ("clear cut chances", "clear cut chances"),
+    ("long shots", "long shots"),
+    ("possession", "possession (%)"),
+    ("corners", "corners"),
+    ("fouls", "fouls"),
+    ("offsides", "offsides"),
+    ("passes completed", "passes completed (%)"),
+    ("crosses completed", "crosses completed (%)"),
+    ("tackles won", "tackles won (%)"),
+    ("headers won", "headers won (%)"),
+    ("yellow cards", "yellow cards"),
+    ("red cards", "red cards"),
+    ("average rating", "average rating"),
+    ("progressive passes", "progressive passes"),
+    ("high intensity sprints", "high intensity sprints"),
+]
+
 
 def _try_run_ocr(image_path: str) -> Optional[Dict[str, object]]:
     """
@@ -98,6 +120,14 @@ def _prompt_int_value(prompt: str) -> int:
             print("Please enter a whole number.")
 
 
+def _prompt_team_name(prompt: str) -> str:
+    while True:
+        name = input(prompt).strip()
+        if name:
+            return name
+        print("Please enter a team name.")
+
+
 def _prompt_numeric_string(prompt: str) -> str:
     while True:
         raw = input(prompt).strip()
@@ -110,27 +140,7 @@ def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str
     print("\n--- Manual match statistics entry ---")
     stats: Dict[str, Tuple[str, str]] = {}
 
-    for stat_key, label in [
-        ("shots", "total shots"),
-        ("on target", "shots on target"),
-        ("xg", "expected goals (xG)"),
-        ("off target", "shots off target"),
-        ("clear cut chances", "clear cut chances"),
-        ("long shots", "long shots"),
-        ("possession", "possession (%)"),
-        ("corners", "corners"),
-        ("fouls", "fouls"),
-        ("offsides", "offsides"),
-        ("passes completed", "passes completed (%)"),
-        ("crosses completed", "crosses completed (%)"),
-        ("tackles won", "tackles won (%)"),
-        ("headers won", "headers won (%)"),
-        ("yellow cards", "yellow cards"),
-        ("red cards", "red cards"),
-        ("average rating", "average rating"),
-        ("progressive passes", "progressive passes"),
-        ("high intensity sprints", "high intensity sprints"),
-    ]:
+    for stat_key, label in MANUAL_STAT_FIELDS:
         home_val = _prompt_numeric_string(f"{home_team} {label}: ")
         away_val = _prompt_numeric_string(f"{away_team} {label}: ")
         stats[stat_key] = (home_val, away_val)
@@ -140,8 +150,8 @@ def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str
 
 def _collect_manual_data() -> Tuple[str, str, Dict[str, Tuple[str, str]], int, int]:
     print("\n--- Manual match data entry ---")
-    home_team = input("Enter home team name: ").strip() or "Home Team"
-    away_team = input("Enter away team name: ").strip() or "Away Team"
+    home_team = _prompt_team_name("Enter home team name: ")
+    away_team = _prompt_team_name("Enter away team name: ")
     home_score = _prompt_int_value(f"Enter {home_team} goals: ")
     away_score = _prompt_int_value(f"Enter {away_team} goals: ")
     stats = _collect_manual_stats(home_team, away_team)
