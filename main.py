@@ -158,7 +158,7 @@ def _prompt_int_value(prompt: str) -> int:
         try:
             return int(raw)
         except ValueError:
-            print("Please enter a whole number.")
+            print(f"Please enter a whole number for '{prompt.strip()}'.")
 
 
 def _prompt_team_name(prompt: str) -> str:
@@ -170,7 +170,7 @@ def _prompt_team_name(prompt: str) -> str:
         print("Please enter a team name.")
 
 
-def _prompt_numeric_string(prompt: str) -> str:
+def _prompt_numeric_value(prompt: str) -> str:
     while True:
         raw = input(prompt).strip()
         _check_cancel(raw)
@@ -188,8 +188,8 @@ def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str
     stats: Dict[str, Tuple[str, str]] = {}
 
     for stat_key, label in MANUAL_STAT_FIELDS:
-        home_val = _prompt_numeric_string(f"{home_team} {label}: ")
-        away_val = _prompt_numeric_string(f"{away_team} {label}: ")
+        home_val = _prompt_numeric_value(f"{home_team} {label}: ")
+        away_val = _prompt_numeric_value(f"{away_team} {label}: ")
         stats[stat_key] = (home_val, away_val)
 
     return stats
