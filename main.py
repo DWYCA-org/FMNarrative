@@ -175,7 +175,10 @@ def _prompt_numeric_string(prompt: str) -> str:
         raw = input(prompt).strip()
         _check_cancel(raw)
         if _parse_numeric(raw) is not None:
-            return raw
+            cleaned = raw
+            if cleaned.endswith("%"):
+                cleaned = cleaned[:-1]
+            return cleaned
         print("Please enter a numeric value.")
 
 
@@ -264,7 +267,7 @@ def main():
         return
 
     print(f"\nDetected match: {home_team} vs {away_team}")
-    print("Match stats:", list(stats.keys()))
+    print("Collected match stats:", list(stats.keys()))
     
     total_goals = home_score + away_score
     score = f"{home_score}-{away_score}"
