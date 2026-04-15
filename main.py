@@ -81,7 +81,7 @@ def _parse_numeric(value: str) -> Optional[float]:
         return None
 
 
-def _prompt_choice(prompt: str, choices: Dict[str, object]):
+def _prompt_choice(prompt: str, choices: Dict[str, object]) -> object:
     while True:
         selection = input(prompt).strip().lower()
         if selection in choices:
@@ -173,12 +173,8 @@ def _collect_ocr_data() -> Optional[Tuple[str, str, Dict[str, Tuple[str, str]], 
         home_score, away_score = score_tuple
         print(f"Detected score: {home_score}-{away_score}")
     else:
-        try:
-            home_score = int(input(f"Enter {home_team} goals: "))
-            away_score = int(input(f"Enter {away_team} goals: "))
-        except ValueError:
-            print("Invalid score input")
-            return None
+        home_score = _prompt_int_value(f"Enter {home_team} goals: ")
+        away_score = _prompt_int_value(f"Enter {away_team} goals: ")
 
     return home_team, away_team, stats, home_score, away_score
 
