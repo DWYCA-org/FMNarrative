@@ -54,6 +54,17 @@ STAT_KEY_ALIASES = {
     "high intensity sprints": "high_intensity_sprints",
 }
 
+CANCEL_INPUTS = {"q", "quit"}
+
+
+class InputCancelled(Exception):
+    pass
+
+
+def _check_cancel(raw_value: str) -> None:
+    if raw_value.strip().lower() in CANCEL_INPUTS:
+        raise InputCancelled()
+
 
 def _try_run_ocr(image_path: str) -> Optional[Dict[str, object]]:
     """
@@ -132,7 +143,9 @@ def _normalize_stat_key(raw_key: str) -> str:
 
 def _prompt_choice(prompt: str, choices: Dict[str, str]) -> str:
     while True:
-        selection = input(prompt).strip().lower()
+        selection = input(prompt).strip()
+        _check_cancel(selection)
+        selection = selection.lower()
         if selection in choices:
             return choices[selection]
         print(f"Invalid choice: {selection}. Please try again.")
@@ -141,6 +154,7 @@ def _prompt_choice(prompt: str, choices: Dict[str, str]) -> str:
 def _prompt_int_value(prompt: str) -> int:
     while True:
         raw = input(prompt).strip()
+        _check_cancel(raw)
         try:
             return int(raw)
         except ValueError:
@@ -150,6 +164,7 @@ def _prompt_int_value(prompt: str) -> int:
 def _prompt_team_name(prompt: str) -> str:
     while True:
         name = input(prompt).strip()
+        _check_cancel(name)
         if name:
             return name
         print("Please enter a team name.")
@@ -158,6 +173,7 @@ def _prompt_team_name(prompt: str) -> str:
 def _prompt_numeric_string(prompt: str) -> str:
     while True:
         raw = input(prompt).strip()
+        _check_cancel(raw)
         if _parse_numeric(raw) is not None:
             return raw
         print("Please enter a numeric value.")
@@ -201,47 +217,51 @@ def extract_score_from_stats(stats: Dict[str, Tuple[str, str]]) -> Optional[Tupl
 
 
 def main():
-    input_method = _prompt_choice(
-        "Choose input method (ocr/manual): ",
-        {"ocr": "ocr", "o": "ocr", "manual": "manual", "m": "manual"},
-    )
+    try:
+        input_method = _prompt_choice(
+            "Choose input method (ocr/manual): ",
+            {"ocr": "ocr", "o": "ocr", "manual": "manual", "m": "manual"},
+        )
 
-    if input_method == "manual":
-        home_team, away_team, stats, home_score, away_score = _collect_manual_data()
-    else:
-        image_path = input("Enter the path to your match screenshot: ").strip()
-        if not image_path:
-            print("Screenshot path is required!")
-            return
-
-        # Run OCR
-        print("Processing screenshot...")
-        ocr_data = _try_run_ocr(image_path)
-
-        if not ocr_data:
-            print("Failed to extract data from screenshot. Please check the image path and OCR setup.")
-            return
-
-        # Extract basic data from OCR
-        home_team = ocr_data.get("home_team", "Home Team")
-        away_team = ocr_data.get("away_team", "Away Team")
-        stats = ocr_data.get("stats", {})
-
-        # Handle team name fallback
-        if home_team in ["UNKNOWN", ""] or away_team in ["UNKNOWN", ""]:
-            print("OCR couldn't detect team names properly.")
-            home_team = input("Enter home team name: ").strip() or "Home Team"
-            away_team = input("Enter away team name: ").strip() or "Away Team"
-
-        # Try to extract score from OCR
-        score_tuple = extract_score_from_stats(stats)
-        if score_tuple:
-            home_score, away_score = score_tuple
-            print(f"Detected score: {home_score}-{away_score}")
+        if input_method == "manual":
+            home_team, away_team, stats, home_score, away_score = _collect_manual_data()
         else:
-            # Fallback - ask for score if not found
-            home_score = _prompt_int_value(f"Enter {home_team} goals: ")
-            away_score = _prompt_int_value(f"Enter {away_team} goals: ")
+            image_path = input("Enter the path to your match screenshot: ").strip()
+            if not image_path:
+                print("Screenshot path is required!")
+                return
+
+            # Run OCR
+            print("Processing screenshot...")
+            ocr_data = _try_run_ocr(image_path)
+
+            if not ocr_data:
+                print("Failed to extract data from screenshot. Please check the image path and OCR setup.")
+                return
+
+            # Extract basic data from OCR
+            home_team = ocr_data.get("home_team", "Home Team")
+            away_team = ocr_data.get("away_team", "Away Team")
+            stats = ocr_data.get("stats", {})
+
+            # Handle team name fallback
+            if home_team in ["UNKNOWN", ""] or away_team in ["UNKNOWN", ""]:
+                print("OCR couldn't detect team names properly.")
+                home_team = input("Enter home team name: ").strip() or "Home Team"
+                away_team = input("Enter away team name: ").strip() or "Away Team"
+
+            # Try to extract score from OCR
+            score_tuple = extract_score_from_stats(stats)
+            if score_tuple:
+                home_score, away_score = score_tuple
+                print(f"Detected score: {home_score}-{away_score}")
+            else:
+                # Fallback - ask for score if not found
+                home_score = _prompt_int_value(f"Enter {home_team} goals: ")
+                away_score = _prompt_int_value(f"Enter {away_team} goals: ")
+    except InputCancelled:
+        print("Input cancelled.")
+        return
 
     print(f"\nDetected match: {home_team} vs {away_team}")
     print("Match stats:", list(stats.keys()))
