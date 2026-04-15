@@ -81,6 +81,108 @@ def _parse_numeric(value: str) -> Optional[float]:
         return None
 
 
+def _prompt_choice(prompt: str, choices: Dict[str, object]):
+    while True:
+        selection = input(prompt).strip().lower()
+        if selection in choices:
+            return choices[selection]
+        print("Invalid choice. Please try again.")
+
+
+def _prompt_int_value(prompt: str) -> int:
+    while True:
+        raw = input(prompt).strip()
+        try:
+            return int(raw)
+        except ValueError:
+            print("Please enter a whole number.")
+
+
+def _prompt_numeric_value(prompt: str) -> str:
+    while True:
+        raw = input(prompt).strip()
+        if _parse_numeric(raw) is not None:
+            return raw
+        print("Please enter a numeric value.")
+
+
+def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str, str]]:
+    print("\n--- Manual match statistics entry ---")
+    stats: Dict[str, Tuple[str, str]] = {}
+
+    def add_stat(stat_key: str, label: str):
+        home_val = _prompt_numeric_value(f"{home_team} {label}: ")
+        away_val = _prompt_numeric_value(f"{away_team} {label}: ")
+        stats[stat_key] = (home_val, away_val)
+
+    add_stat("shots", "total shots")
+    add_stat("on target", "shots on target")
+    add_stat("xg", "expected goals (xG)")
+    add_stat("off target", "shots off target")
+    add_stat("clear cut chances", "clear cut chances")
+    add_stat("long shots", "long shots")
+    add_stat("possession", "possession (%)")
+    add_stat("corners", "corners")
+    add_stat("fouls", "fouls")
+    add_stat("offsides", "offsides")
+    add_stat("passes completed", "passes completed (%)")
+    add_stat("crosses completed", "crosses completed (%)")
+    add_stat("tackles won", "tackles won (%)")
+    add_stat("headers won", "headers won (%)")
+    add_stat("yellow cards", "yellow cards")
+    add_stat("red cards", "red cards")
+    add_stat("average rating", "average rating")
+    add_stat("progressive passes", "progressive passes")
+    add_stat("high intensity sprints", "high intensity sprints")
+
+    return stats
+
+
+def _collect_manual_data() -> Tuple[str, str, Dict[str, Tuple[str, str]], int, int]:
+    print("\n--- Manual match data entry ---")
+    home_team = input("Enter home team name: ").strip() or "Home Team"
+    away_team = input("Enter away team name: ").strip() or "Away Team"
+    home_score = _prompt_int_value(f"Enter {home_team} goals: ")
+    away_score = _prompt_int_value(f"Enter {away_team} goals: ")
+    stats = _collect_manual_stats(home_team, away_team)
+    return home_team, away_team, stats, home_score, away_score
+
+
+def _collect_ocr_data() -> Optional[Tuple[str, str, Dict[str, Tuple[str, str]], int, int]]:
+    image_path = input("Enter the path to your match screenshot: ").strip()
+    if not image_path:
+        print("Screenshot path is required for OCR.")
+        return None
+
+    print("Processing screenshot...")
+    ocr_data = _try_run_ocr(image_path)
+    if not ocr_data:
+        return None
+
+    home_team = ocr_data.get("home_team", "Home Team")
+    away_team = ocr_data.get("away_team", "Away Team")
+    stats = ocr_data.get("stats", {})
+
+    if home_team in ["UNKNOWN", ""] or away_team in ["UNKNOWN", ""]:
+        print("OCR couldn't detect team names properly.")
+        home_team = input("Enter home team name: ").strip() or "Home Team"
+        away_team = input("Enter away team name: ").strip() or "Away Team"
+
+    score_tuple = extract_score_from_stats(stats)
+    if score_tuple:
+        home_score, away_score = score_tuple
+        print(f"Detected score: {home_score}-{away_score}")
+    else:
+        try:
+            home_score = int(input(f"Enter {home_team} goals: "))
+            away_score = int(input(f"Enter {away_team} goals: "))
+        except ValueError:
+            print("Invalid score input")
+            return None
+
+    return home_team, away_team, stats, home_score, away_score
+
+
 def extract_score_from_stats(stats: Dict[str, Tuple[str, str]]) -> Optional[Tuple[int, int]]:
     """Try to extract the match score from stats if available."""
     # Look for goals or score in the stats
@@ -95,47 +197,29 @@ def extract_score_from_stats(stats: Dict[str, Tuple[str, str]]) -> Optional[Tupl
 
 
 def main():
-    # Get screenshot - REQUIRED
-    image_path = input("Enter the path to your match screenshot: ").strip()
-    if not image_path:
-        print("Screenshot path is required!")
-        return
-    
-    # Run OCR
-    print("Processing screenshot...")
-    ocr_data = _try_run_ocr(image_path)
-    
-    if not ocr_data:
-        print("Failed to extract data from screenshot. Please check the image path and OCR setup.")
-        return
-    
-    # Extract basic data from OCR
-    home_team = ocr_data.get("home_team", "Home Team")
-    away_team = ocr_data.get("away_team", "Away Team")
-    stats = ocr_data.get("stats", {})
-    
-    # Handle team name fallback
-    if home_team in ["UNKNOWN", ""] or away_team in ["UNKNOWN", ""]:
-        print("OCR couldn't detect team names properly.")
-        home_team = input("Enter home team name: ").strip() or "Home Team"
-        away_team = input("Enter away team name: ").strip() or "Away Team"
-    
-    print(f"\nDetected match: {home_team} vs {away_team}")
-    print("Extracted stats:", list(stats.keys()))
-    
-    # Try to extract score from OCR
-    score_tuple = extract_score_from_stats(stats)
-    if score_tuple:
-        home_score, away_score = score_tuple
-        print(f"Detected score: {home_score}-{away_score}")
+    input_method = _prompt_choice(
+        "Choose input method (ocr/manual): ",
+        {"ocr": "ocr", "o": "ocr", "manual": "manual", "m": "manual"},
+    )
+
+    if input_method == "ocr":
+        ocr_result = _collect_ocr_data()
+        if not ocr_result:
+            fallback = _prompt_choice(
+                "OCR failed. Enter stats manually instead? (y/n): ",
+                {"y": True, "yes": True, "n": False, "no": False},
+            )
+            if not fallback:
+                print("No match data collected.")
+                return
+            home_team, away_team, stats, home_score, away_score = _collect_manual_data()
+        else:
+            home_team, away_team, stats, home_score, away_score = ocr_result
     else:
-        # Fallback - ask for score if not found
-        try:
-            home_score = int(input(f"Enter {home_team} goals: "))
-            away_score = int(input(f"Enter {away_team} goals: "))
-        except ValueError:
-            print("Invalid score input")
-            return
+        home_team, away_team, stats, home_score, away_score = _collect_manual_data()
+
+    print(f"\nDetected match: {home_team} vs {away_team}")
+    print("Available stats:", list(stats.keys()))
     
     total_goals = home_score + away_score
     score = f"{home_score}-{away_score}"
@@ -226,10 +310,10 @@ def main():
         
         importance = base_importance * season_multiplier
     
-    # EXTRACT ALL OTHER DATA FROM OCR
-    print("\n--- Extracting stats from screenshot ---")
+    # PROCESS ALL OTHER DATA FROM MATCH STATS
+    print("\n--- Processing match stats ---")
     
-    # Extract stats with fallbacks - now checking all available OCR stats
+    # Extract stats with fallbacks - now checking all available input stats
     def get_stat(key_variations, default_home=0, default_away=0):
         for key in key_variations:
             if key in stats:
@@ -239,7 +323,7 @@ def main():
                     return home_val, away_val
         return default_home, default_away
     
-    # All stats from OCR (these are always from screenshot perspective: left=home, right=away)
+    # All stats from input (these are always from home/away perspective)
     home_shots, away_shots = get_stat(['shots'], 0, 0)
     home_shots_target, away_shots_target = get_stat(['on target'], 0, 0)
     home_xg, away_xg = get_stat(['xg'], 0.0, 0.0)
