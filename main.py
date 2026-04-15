@@ -98,7 +98,7 @@ def _prompt_int_value(prompt: str) -> int:
         try:
             return int(raw)
         except ValueError:
-            print("Please enter a whole number.")
+        print("Please enter a whole number.")
 
 
 def _prompt_numeric_string(prompt: str) -> str:
@@ -109,42 +109,51 @@ def _prompt_numeric_string(prompt: str) -> str:
         print("Please enter a numeric value.")
 
 
+def _prompt_team_names() -> Tuple[str, str]:
+    home_team = input("Enter home team name: ").strip() or DEFAULT_HOME_TEAM
+    away_team = input("Enter away team name: ").strip() or DEFAULT_AWAY_TEAM
+    return home_team, away_team
+
+
+def _prompt_stat_pair(home_team: str, away_team: str, label: str) -> Tuple[str, str]:
+    home_val = _prompt_numeric_string(f"{home_team} {label}: ")
+    away_val = _prompt_numeric_string(f"{away_team} {label}: ")
+    return home_val, away_val
+
+
 def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str, str]]:
     print("\n--- Manual match statistics entry ---")
     stats: Dict[str, Tuple[str, str]] = {}
 
-    def add_stat(stat_key: str, label: str):
-        home_val = _prompt_numeric_string(f"{home_team} {label}: ")
-        away_val = _prompt_numeric_string(f"{away_team} {label}: ")
-        stats[stat_key] = (home_val, away_val)
-
-    add_stat("shots", "total shots")
-    add_stat("on target", "shots on target")
-    add_stat("xg", "expected goals (xG)")
-    add_stat("off target", "shots off target")
-    add_stat("clear cut chances", "clear cut chances")
-    add_stat("long shots", "long shots")
-    add_stat("possession", "possession (%)")
-    add_stat("corners", "corners")
-    add_stat("fouls", "fouls")
-    add_stat("offsides", "offsides")
-    add_stat("passes completed", "passes completed (%)")
-    add_stat("crosses completed", "crosses completed (%)")
-    add_stat("tackles won", "tackles won (%)")
-    add_stat("headers won", "headers won (%)")
-    add_stat("yellow cards", "yellow cards")
-    add_stat("red cards", "red cards")
-    add_stat("average rating", "average rating")
-    add_stat("progressive passes", "progressive passes")
-    add_stat("high intensity sprints", "high intensity sprints")
+    for stat_key, label in [
+        ("shots", "total shots"),
+        ("on target", "shots on target"),
+        ("xg", "expected goals (xG)"),
+        ("off target", "shots off target"),
+        ("clear cut chances", "clear cut chances"),
+        ("long shots", "long shots"),
+        ("possession", "possession (%)"),
+        ("corners", "corners"),
+        ("fouls", "fouls"),
+        ("offsides", "offsides"),
+        ("passes completed", "passes completed (%)"),
+        ("crosses completed", "crosses completed (%)"),
+        ("tackles won", "tackles won (%)"),
+        ("headers won", "headers won (%)"),
+        ("yellow cards", "yellow cards"),
+        ("red cards", "red cards"),
+        ("average rating", "average rating"),
+        ("progressive passes", "progressive passes"),
+        ("high intensity sprints", "high intensity sprints"),
+    ]:
+        stats[stat_key] = _prompt_stat_pair(home_team, away_team, label)
 
     return stats
 
 
 def _collect_manual_data() -> Tuple[str, str, Dict[str, Tuple[str, str]], int, int]:
     print("\n--- Manual match data entry ---")
-    home_team = input("Enter home team name: ").strip() or DEFAULT_HOME_TEAM
-    away_team = input("Enter away team name: ").strip() or DEFAULT_AWAY_TEAM
+    home_team, away_team = _prompt_team_names()
     home_score = _prompt_int_value(f"Enter {home_team} goals: ")
     away_score = _prompt_int_value(f"Enter {away_team} goals: ")
     stats = _collect_manual_stats(home_team, away_team)
@@ -168,8 +177,7 @@ def _collect_ocr_data() -> Optional[Tuple[str, str, Dict[str, Tuple[str, str]], 
 
     if home_team in ["UNKNOWN", ""] or away_team in ["UNKNOWN", ""]:
         print("OCR couldn't detect team names properly.")
-        home_team = input("Enter home team name: ").strip() or DEFAULT_HOME_TEAM
-        away_team = input("Enter away team name: ").strip() or DEFAULT_AWAY_TEAM
+        home_team, away_team = _prompt_team_names()
 
     score_tuple = extract_score_from_stats(stats)
     if score_tuple:
