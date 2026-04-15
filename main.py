@@ -17,23 +17,42 @@ MANUAL_STAT_FIELDS = [
     ("shots", "total shots"),
     ("shots_on_target", "shots on target"),
     ("xg", "expected goals (xG)"),
-    ("off target", "shots off target"),
-    ("clear cut chances", "clear cut chances"),
-    ("long shots", "long shots"),
+    ("shots_off_target", "shots off target"),
+    ("clear_cut_chances", "clear cut chances"),
+    ("long_shots", "long shots"),
     ("possession", "possession (%)"),
     ("corners", "corners"),
     ("fouls", "fouls"),
     ("offsides", "offsides"),
-    ("passes completed", "passes completed (%)"),
-    ("crosses completed", "crosses completed (%)"),
-    ("tackles won", "tackles won (%)"),
-    ("headers won", "headers won (%)"),
-    ("yellow cards", "yellow cards"),
-    ("red cards", "red cards"),
-    ("average rating", "average rating"),
-    ("progressive passes", "progressive passes"),
-    ("high intensity sprints", "high intensity sprints"),
+    ("passes_completed", "passes completed (%)"),
+    ("crosses_completed", "crosses completed (%)"),
+    ("tackles_won", "tackles won (%)"),
+    ("headers_won", "headers won (%)"),
+    ("yellow_cards", "yellow cards"),
+    ("red_cards", "red cards"),
+    ("average_rating", "average rating"),
+    ("progressive_passes", "progressive passes"),
+    ("high_intensity_sprints", "high intensity sprints"),
 ]
+
+STAT_KEY_ALIASES = {
+    "shots on target": "shots_on_target",
+    "on target": "shots_on_target",
+    "shots off target": "shots_off_target",
+    "off target": "shots_off_target",
+    "clear cut chances": "clear_cut_chances",
+    "clear-cut chances": "clear_cut_chances",
+    "long shots": "long_shots",
+    "passes completed": "passes_completed",
+    "crosses completed": "crosses_completed",
+    "tackles won": "tackles_won",
+    "headers won": "headers_won",
+    "yellow cards": "yellow_cards",
+    "red cards": "red_cards",
+    "average rating": "average_rating",
+    "progressive passes": "progressive_passes",
+    "high intensity sprints": "high_intensity_sprints",
+}
 
 
 def _try_run_ocr(image_path: str) -> Optional[Dict[str, object]]:
@@ -74,7 +93,7 @@ def _try_run_ocr(image_path: str) -> Optional[Dict[str, object]]:
             payload = line.split(":", 1)[1]
             parts = payload.split("|")
             if len(parts) >= 3:
-                stat_name = parts[0].strip().lower()
+                stat_name = _normalize_stat_key(parts[0])
                 home_val = parts[1].strip()
                 away_val = parts[2].strip()
                 stats[stat_name] = (home_val, away_val)
@@ -102,6 +121,13 @@ def _parse_numeric(value: str) -> Optional[float]:
         return float(cleaned)
     except Exception:
         return None
+
+
+def _normalize_stat_key(raw_key: str) -> str:
+    cleaned = raw_key.strip().lower()
+    if cleaned in STAT_KEY_ALIASES:
+        return STAT_KEY_ALIASES[cleaned]
+    return cleaned.replace(" ", "_")
 
 
 def _prompt_choice(prompt: str, choices: Dict[str, str]) -> str:
@@ -138,6 +164,7 @@ def _prompt_numeric_string(prompt: str) -> str:
 
 
 def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str, str]]:
+    """Collect full stat lines keyed by canonical stat identifiers."""
     print("\n--- Manual match statistics entry ---")
     stats: Dict[str, Tuple[str, str]] = {}
 
@@ -150,6 +177,7 @@ def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str
 
 
 def _collect_manual_data() -> Tuple[str, str, Dict[str, Tuple[str, str]], int, int]:
+    """Collect manual team names, score, and detailed stats."""
     print("\n--- Manual match data entry ---")
     home_team = _prompt_team_name("Enter home team name: ")
     away_team = _prompt_team_name("Enter away team name: ")
@@ -322,24 +350,24 @@ def main():
     
     # All stats from input (these are always from home/away perspective)
     home_shots, away_shots = get_stat(['shots'], 0, 0)
-    home_shots_target, away_shots_target = get_stat(['on target', 'shots on target', 'shots_on_target'], 0, 0)
+    home_shots_target, away_shots_target = get_stat(['shots_on_target'], 0, 0)
     home_xg, away_xg = get_stat(['xg'], 0.0, 0.0)
-    home_shots_off, away_shots_off = get_stat(['off target'], 0, 0)
-    home_clear_chances, away_clear_chances = get_stat(['clear cut chances'], 0, 0)
-    home_long_shots, away_long_shots = get_stat(['long shots'], 0, 0)
+    home_shots_off, away_shots_off = get_stat(['shots_off_target'], 0, 0)
+    home_clear_chances, away_clear_chances = get_stat(['clear_cut_chances'], 0, 0)
+    home_long_shots, away_long_shots = get_stat(['long_shots'], 0, 0)
     pos_home, pos_away = get_stat(['possession'], 50, 50)
     home_corners, away_corners = get_stat(['corners'], 0, 0)
     home_fouls, away_fouls = get_stat(['fouls'], 0, 0)
     home_offsides, away_offsides = get_stat(['offsides'], 0, 0)
-    home_passes_comp, away_passes_comp = get_stat(['passes completed'], 50, 50)
-    home_crosses_comp, away_crosses_comp = get_stat(['crosses completed'], 0, 0)
-    home_tackles_won, away_tackles_won = get_stat(['tackles won'], 50, 50)
-    home_headers_won, away_headers_won = get_stat(['headers won'], 50, 50)
-    home_yellow, away_yellow = get_stat(['yellow cards'], 0, 0)
-    home_red, away_red = get_stat(['red cards'], 0, 0)
-    home_rating, away_rating = get_stat(['average rating'], 6.5, 6.5)
-    home_prog_passes, away_prog_passes = get_stat(['progressive passes'], 0, 0)
-    home_sprints, away_sprints = get_stat(['high intensity sprints'], 0, 0)
+    home_passes_comp, away_passes_comp = get_stat(['passes_completed'], 50, 50)
+    home_crosses_comp, away_crosses_comp = get_stat(['crosses_completed'], 0, 0)
+    home_tackles_won, away_tackles_won = get_stat(['tackles_won'], 50, 50)
+    home_headers_won, away_headers_won = get_stat(['headers_won'], 50, 50)
+    home_yellow, away_yellow = get_stat(['yellow_cards'], 0, 0)
+    home_red, away_red = get_stat(['red_cards'], 0, 0)
+    home_rating, away_rating = get_stat(['average_rating'], 6.5, 6.5)
+    home_prog_passes, away_prog_passes = get_stat(['progressive_passes'], 0, 0)
+    home_sprints, away_sprints = get_stat(['high_intensity_sprints'], 0, 0)
     
     # Convert to integers where appropriate
     home_shots, away_shots = int(home_shots), int(away_shots)
