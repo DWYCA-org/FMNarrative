@@ -34,6 +34,3 @@ Create a `.env` file in the project root:
 ```
 GROQ_API_KEY=your_api_key_here
 ```
-
-## Usage
-Run `python main.py` and choose whether to provide match stats manually or via OCR when prompted.
