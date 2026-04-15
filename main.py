@@ -12,6 +12,9 @@ if api_key is None:
     raise ValueError("GROQ_API_KEY environment variable not set.")
 client = Groq(api_key=api_key)
 
+DEFAULT_HOME_TEAM = "Home Team"
+DEFAULT_AWAY_TEAM = "Away Team"
+
 
 def _try_run_ocr(image_path: str) -> Optional[Dict[str, object]]:
     """
@@ -98,7 +101,7 @@ def _prompt_int_value(prompt: str) -> int:
             print("Please enter a whole number.")
 
 
-def _prompt_numeric_value(prompt: str) -> str:
+def _prompt_numeric_string(prompt: str) -> str:
     while True:
         raw = input(prompt).strip()
         if _parse_numeric(raw) is not None:
@@ -111,8 +114,8 @@ def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str
     stats: Dict[str, Tuple[str, str]] = {}
 
     def add_stat(stat_key: str, label: str):
-        home_val = _prompt_numeric_value(f"{home_team} {label}: ")
-        away_val = _prompt_numeric_value(f"{away_team} {label}: ")
+        home_val = _prompt_numeric_string(f"{home_team} {label}: ")
+        away_val = _prompt_numeric_string(f"{away_team} {label}: ")
         stats[stat_key] = (home_val, away_val)
 
     add_stat("shots", "total shots")
@@ -140,8 +143,8 @@ def _collect_manual_stats(home_team: str, away_team: str) -> Dict[str, Tuple[str
 
 def _collect_manual_data() -> Tuple[str, str, Dict[str, Tuple[str, str]], int, int]:
     print("\n--- Manual match data entry ---")
-    home_team = input("Enter home team name: ").strip() or "Home Team"
-    away_team = input("Enter away team name: ").strip() or "Away Team"
+    home_team = input("Enter home team name: ").strip() or DEFAULT_HOME_TEAM
+    away_team = input("Enter away team name: ").strip() or DEFAULT_AWAY_TEAM
     home_score = _prompt_int_value(f"Enter {home_team} goals: ")
     away_score = _prompt_int_value(f"Enter {away_team} goals: ")
     stats = _collect_manual_stats(home_team, away_team)
@@ -159,14 +162,14 @@ def _collect_ocr_data() -> Optional[Tuple[str, str, Dict[str, Tuple[str, str]], 
     if not ocr_data:
         return None
 
-    home_team = ocr_data.get("home_team", "Home Team")
-    away_team = ocr_data.get("away_team", "Away Team")
+    home_team = ocr_data.get("home_team", DEFAULT_HOME_TEAM)
+    away_team = ocr_data.get("away_team", DEFAULT_AWAY_TEAM)
     stats = ocr_data.get("stats", {})
 
     if home_team in ["UNKNOWN", ""] or away_team in ["UNKNOWN", ""]:
         print("OCR couldn't detect team names properly.")
-        home_team = input("Enter home team name: ").strip() or "Home Team"
-        away_team = input("Enter away team name: ").strip() or "Away Team"
+        home_team = input("Enter home team name: ").strip() or DEFAULT_HOME_TEAM
+        away_team = input("Enter away team name: ").strip() or DEFAULT_AWAY_TEAM
 
     score_tuple = extract_score_from_stats(stats)
     if score_tuple:
@@ -215,7 +218,7 @@ def main():
         home_team, away_team, stats, home_score, away_score = _collect_manual_data()
 
     print(f"\nDetected match: {home_team} vs {away_team}")
-    print("Available stats:", list(stats.keys()))
+    print("Match stats:", list(stats.keys()))
     
     total_goals = home_score + away_score
     score = f"{home_score}-{away_score}"
