@@ -17,7 +17,6 @@ MANUAL_STAT_FIELDS = [
     ("shots", "total shots"),
     ("shots_on_target", "shots on target"),
     ("xg", "expected goals (xG)"),
-    ("shots_off_target", "shots off target"),
     ("clear_cut_chances", "clear cut chances"),
     ("long_shots", "long shots"),
     ("possession", "possession (%)"),
@@ -375,7 +374,11 @@ def main():
     home_shots, away_shots = get_stat(['shots'], 0, 0)
     home_shots_target, away_shots_target = get_stat(['shots_on_target'], 0, 0)
     home_xg, away_xg = get_stat(['xg'], 0.0, 0.0)
-    home_shots_off, away_shots_off = get_stat(['shots_off_target'], 0, 0)
+    if 'shots_off_target' in stats:
+        home_shots_off, away_shots_off = get_stat(['shots_off_target'], 0, 0)
+    else:
+        home_shots_off = max(home_shots - home_shots_target, 0)
+        away_shots_off = max(away_shots - away_shots_target, 0)
     home_clear_chances, away_clear_chances = get_stat(['clear_cut_chances'], 0, 0)
     home_long_shots, away_long_shots = get_stat(['long_shots'], 0, 0)
     pos_home, pos_away = get_stat(['possession'], 50, 50)
